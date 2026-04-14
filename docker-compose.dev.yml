@@ -1,0 +1,37 @@
+services:
+  postgresql:
+    image: postgres:16-alpine
+    ports:
+      - "${PG_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${PG_DB:-clio_db}
+      POSTGRES_USER: ${PG_USER:-clio}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-clio_dev_2026}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD:-clio_dev_2026}
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.8.4
+    ports:
+      - "${QDRANT_HTTP_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  qdrant_data:
